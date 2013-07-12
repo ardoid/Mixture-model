@@ -19,13 +19,16 @@ void kmeans(const DataSetType& data)  {
     std::vector<std::vector<int> > cluster(2);
     std::vector<GP_Vector> cluster_center(K, GP_Vector(2));
 
+    for (int k=0; k<K; ++k) {
+        cluster_center[k] = data.GetInput()[rand()%data.Size()];
+    }
+
+    // iteration loop
     for(int i=0;i<20;i++)
     {
         for (int k=0; k<K; ++k) {
-            cluster_center[k] = data.GetInput()[rand()%data.Size()];
             cluster[k].clear();
         }
-
         // reassign data points
         for (int j = 0;j<data.Size();j++)  {
             float minDistance = std::numeric_limits<float>::max();
@@ -52,29 +55,45 @@ void kmeans(const DataSetType& data)  {
             cluster_center[k] = sum;
         }
 
-        std::cout << i << " Cluster1:" << cluster_center[0];
-        std::cout << " Cluster2:" << cluster_center[1] << std::endl;
+    }
 
-        std::vector<int> positive(K, 0);
-        std::vector<int> negative(K, 0);
-        for (int k=0; k<K;k++)  {
-            for(int z=0; z<cluster[k].size(); z++)  {
-                int trueclass = 0;
-                if (data.GetOutput()[cluster[k][z]] == 1) {
-                    trueclass = 1;
-                }
-                if (k == trueclass )  {
-                    ++positive[k];
-                } else {
-                    ++negative[k];
-                }
+    std::cout << " Cluster1:" << cluster_center[0];
+    std::cout << " Cluster2:" << cluster_center[1] << std::endl;
+
+    std::vector<int> positive(K, 0);
+    std::vector<int> negative(K, 0);
+    for (int k=0; k<K;k++)  {
+        for(int z=0; z<cluster[k].size(); z++)  {
+            int trueclass = 0;
+            if (data.GetOutput()[cluster[k][z]] == 1) {
+                trueclass = 1;
+            }
+            if (k == trueclass )  {
+                ++positive[k];
+            } else {
+                ++negative[k];
             }
         }
-
-        std::cout << " positive1: " << positive[0] << " negative1: " << negative[0] << std::endl;
-        std::cout << " positive2: " << positive[1] << " negative2: " << negative[1] << std::endl;
-
     }
+
+    int negative_all = 0;
+    int positive_all = 0;
+    for (int k=0; k<K;k++)  {
+        positive_all += positive[k];
+        negative_all += negative[k];
+    }
+
+    // swap cluster assignment
+    if (negative_all > positive_all) {
+        for (int k=0; k<K;k++)  {
+            int tmp = positive[k];
+            positive[k] = negative[k];
+            negative[k] = tmp;
+        }
+    }
+
+    std::cout << " positive1: " << positive[0] << " negative1: " << negative[0] << std::endl;
+    std::cout << " positive2: " << positive[1] << " negative2: " << negative[1] << std::endl;
 
 }
 
@@ -123,6 +142,9 @@ GP_Matrix gaussian(float x, float mu, float sigma)  {
 
 
 int main(int argc, char **argv) {
+  /* initialize random seed: */
+  srand (time(NULL));
+
   if(argc < 2) {
     std::cerr << "usage:" << argv[0] << " <dataset.dat>" << std::endl;
     exit(1);
@@ -134,12 +156,12 @@ int main(int argc, char **argv) {
 
   std::cout << "size of dataset: " << data.Size() << std::endl;
 
-  std::cout << "First 20 values:" << std::endl;
+ // std::cout << "First 20 values:" << std::endl;
   for(size_t i = 0; i < 20; ++i) {
     InputType  x  = data.GetInput()[i];
     OutputType y  = data.GetOutput()[i];
 
-    std::cout << "Input: " << x << " Output: " << y << std::endl;
+   // std::cout << "Input: " << x << " Output: " << y << std::endl;
   }
 
   kmeans(data);
